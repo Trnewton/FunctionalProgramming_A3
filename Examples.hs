@@ -4,21 +4,21 @@ module Examples where
 import Lib.RawString
 import Lib.AST
 
-{- Here, you can write some example programs as Raw String literals to 
+{- Here, you can write some example programs as Raw String literals to
  - test your code..
  -}
 
 {- Some remarks about the parser..
  -
- - To use the parser (see Lib.ASTParse for more details), write 
+ - To use the parser (see Lib.ASTParse for more details), write
  -      ``unsafeParseLambdaTerm <some lambda term here>``
  - and this should return a LambdaTerm, but otherwise, it will throw an (uninformative) error..
  -
  -
  -  This parser will either accept:
- -      ``\x . x`` 
- -     or 
- -      ``\x -> x`` 
+ -      ``\x . x``
+ -     or
+ -      ``\x -> x``
  -  as a lambda abstraction.
  -
  -  Infixity of binary operations copies Haskell, i.e., the infixity is defined as follows:
@@ -41,18 +41,18 @@ import Lib.AST
     \f -> (\x . f x x ) (\x . f x x )
  -  ```
  -  and the parser will just parse ``\f -> (\x . f x x ) (\x . f x x )``.
- - 
+ -
  - The list case construct (written as ``lcase``) REQUIRES both cases to be written, AND
  - a semicolon to separate the two cases.
  - For example, to take the head of the list ``[1,2,3]``, write:
- -  ``(\inp -> lcase inp of 
+ -  ``(\inp -> lcase inp of
  -      [] -> 0 ;  -- << NOTE THE SEMICOLON WRITTEN HERE IS VERY IMPORTANT
  -      a:as -> a) [1,2,3]
  -  ``
- - But, writing 
- -  ``(\inp -> lcase inp of 
- -              [] -> 0  
- -              a:as -> a) 
+ - But, writing
+ -  ``(\inp -> lcase inp of
+ -              [] -> 0
+ -              a:as -> a)
  -    [1,2,3]
  -  ``
  - would be a parse error since it is missing the semicolon between the two cases..
@@ -60,22 +60,22 @@ import Lib.AST
  - Parsing the built-in ``fix`` function (for recursion) is a little strange...
  - We write some examples to illustrate.
  - If we write:
- -  ``fix (\f -> 3)`` 
- - then, this parses as 
+ -  ``fix (\f -> 3)``
+ - then, this parses as
  -  ``FFix0 "f" (Const 3)``
  -
  - If we write:
- -  ``fix (\f a -> 3)`` 
- - then, this parses as 
+ -  ``fix (\f a -> 3)``
+ - then, this parses as
  -  ``FFix1 ("f","a") (Const 3)``
  - (note the change of constructors)
  -
  - But if we write:
  -  ``fix (\f a b -> 3)``
- - then, this parses as  
+ - then, this parses as
  -  ``FFix1 ("f","a") (Abs ("b",[]) (Const 3))``
  - (note how it automatically ``flattens`` the extra abstractions, but this only happens with the built in fix function).
- - This is done to save you some headaches later with how the machine handles fixed points! 
+ - This is done to save you some headaches later with how the machine handles fixed points!
  -
  - Below, we include some example programs (but you should write your own too!)
  - to get a better feel for the grammar...
@@ -84,14 +84,49 @@ import Lib.AST
 --------------------
  -- Write your own examples:
 --------------------
+myMap = [r|
+    (\g ->  fix (\f l -> lcase l of
+                [] -> [] ;
+                a:as -> (g a) : (f as)
+            )
+    )
+        (\x -> 2*x)
+        [1,2,3,4]
+|]
 
+factorial :: String
+factorial = [r|
+    fix (\f N -> if (N <= 0) then 1 else N * f (N + (-1) ) ) 7
+|]
+
+fancySum = [r|
+    (\g -> fix (\f N -> if (N <= 0) then 0 else g N + f (N + (-1) ) ) )
+    (\x ->  3 * x * x )
+    7
+|]
+
+forLoop = [r|
+    (\g x -> fix (\f N -> if (N <= 0) then x else g ( f (N + (-1) ) ) ) )
+        (\x ->  x + 1 )
+        7
+        10
+|]
+
+power = [r|
+    (\x n ->
+        (\g -> fix (\f N -> if (N <= 0) then 1 else g ( f (N + (-1) ) ) ) n )
+        ((\y z ->  y * z ) x)
+    )
+        3
+        5
+|]
 
 --------------------
 -- Given examples:
 --------------------
 assign0 :: String
 assign0 = [r|
-    (\x -> x + 1)  3 
+    (\x -> x + 1)  3
 |]
 
 higherordersucc :: String
@@ -101,7 +136,7 @@ higherordersucc = [r|
 
 zipwithsum :: String
 zipwithsum = [r|
-    fix (\f a b ->  
+    fix (\f a b ->
         lcase a of
             [] -> [] ;
             a:as -> lcase b of
@@ -134,15 +169,19 @@ headofemptylist = [r|
 
 sumoflist :: String
 sumoflist = [r|
-    fix 
-        (\loop inp -> lcase inp of 
-            [] -> 0 ; 
+    fix
+        (\loop inp -> lcase inp of
+            [] -> 0 ;
             a:as -> a + loop as
-        ) 
+        )
         [1,2,3,4]
 |]
 
 computingfactorial :: String
 computingfactorial = [r|
     fix (\loop inp -> if inp <= 1 then 1 else inp * loop (inp + (-1) ) ) 10
+|]
+
+f = [r|
+    (\x -> (\f -> f (f x)) (\y -> 2 + y)) 3
 |]

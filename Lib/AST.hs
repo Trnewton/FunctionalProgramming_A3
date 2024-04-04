@@ -13,24 +13,24 @@ import Lib.Monads
  -}
 
 -- A type alias for a user inputted lambda term
-type LambdaTerm = Term String (String, [String]) String 
+type LambdaTerm = Term String (String, [String]) String
 
--- A type alias the DeBruijn indexed type of a 
+-- A type alias the DeBruijn indexed type of a
 -- lambda term.
 type DeBruijnTerm = Term () () Int
 
 -- | Term singlebinder multibinder var
 -- The type of a lambda term.
--- Some notes on the type definition -- for ``Term singlebinder multibinder var``, 
---      - the type variable ``singlebinder`` is the type of an argument 
+-- Some notes on the type definition -- for ``Term singlebinder multibinder var``,
+--      - the type variable ``singlebinder`` is the type of an argument
 --          which binds exactly one variable
---      - the type variable ``multibinder`` is the type of an argument 
+--      - the type variable ``multibinder`` is the type of an argument
 --          which binds one or more variables.
---      - the type variable ``var`` is the type of a variable used in the body of 
+--      - the type variable ``var`` is the type of a variable used in the body of
 --            a lambda term
-data Term singlebinder multibinder var =
+data Term singlebinder multibinder var
     -- A lambda abstraction
-    Abs multibinder (Term singlebinder multibinder var)
+    = Abs multibinder (Term singlebinder multibinder var)
     -- An application
     | App (Term singlebinder multibinder var) (Term singlebinder multibinder var)
     -- A variable
@@ -38,14 +38,14 @@ data Term singlebinder multibinder var =
 
     -- A constant value
     | Const Int
-    -- Primitive addition 
+    -- Primitive addition
     | Add (Term singlebinder multibinder var) (Term singlebinder multibinder var)
-    -- Primitive multiplication 
+    -- Primitive multiplication
     | Mul (Term singlebinder multibinder var) (Term singlebinder multibinder var)
 
     -- Primitive if
     | BIf (Term singlebinder multibinder var) (Term singlebinder multibinder var) (Term singlebinder multibinder var)
-    -- Primitive Leq 
+    -- Primitive Leq
     | BLeq (Term singlebinder multibinder var) (Term singlebinder multibinder var)
     -- Primitive True
     | BTrue
@@ -54,7 +54,7 @@ data Term singlebinder multibinder var =
 
     -- fixed point combinators for a function which takes 0 arguments
     -- and 1 argument.
-    -- (see the pg.19 of ces.pdf for more details). 
+    -- (see the pg.19 of ces.pdf for more details).
     -- This corresponds to Fixc:
     | FFix0 singlebinder (Term singlebinder multibinder var)
     -- This corresponds to Fix:
@@ -65,11 +65,11 @@ data Term singlebinder multibinder var =
     -- Primitive cons
     | LCons (Term singlebinder multibinder var) (Term singlebinder multibinder var)  --
     -- Primitive list case
-    | LCase 
+    | LCase
         -- (term to pattern match on)
-        (Term singlebinder multibinder var)                
+        (Term singlebinder multibinder var)
         -- (what to output in the LNil case)
-        (Term singlebinder multibinder var)                 
+        (Term singlebinder multibinder var)
         -- ( a : b, term to output where ``a`` and ``b`` are bound to the constructor)
         ((singlebinder, singlebinder), Term singlebinder multibinder var)
   deriving (Show, Eq)
@@ -88,14 +88,14 @@ type CES = (Code, Env, Stack)
 -- The ``Instr`` type is the instructions used for the
 -- CES machine..
 -- See pg 17 of ``ces.pdf``
-data Instr = 
-    IClo (Code, Env) -- ( code, environment )
-    | IApp 
+data Instr
+    = IClo (Code, Env) -- ( code, environment )
+    | IApp
     | IAccess Int
     | IRet
 
     | IConst Int
-    | IAdd 
+    | IAdd
     | IMul
     | ILeq
 
@@ -103,13 +103,13 @@ data Instr =
     | IFalse
     | IIf (Code, Code)
 
-    -- 0 arity fix
+    -- 0 arity fixc
     | IFFix0 (Code, Env) -- ( code, environment )
     -- 1 arity fix
     | IFFix1 (Code, Env) -- ( code, environment )
 
     | ICons (Maybe (Instr, Instr))
-    | INil 
+    | INil
     | ICase (Code, Code) -- (the [] case, the (_:_) case)
   deriving (Show, Eq)
 
@@ -128,16 +128,16 @@ deBruijnTermPrettyPrint = termPrettyPrint
 --------------------------------------
 
 -- | TermPrettyPrinter is a pretty printer for a ``Term a b``.
--- Write 
---      `` termPrettyPrint (someTerm :: LambdaTerm)`` 
+-- Write
+--      `` termPrettyPrint (someTerm :: LambdaTerm)``
 --      or
---      `` termPrettyPrint (someTerm :: DeBruijnTerm)`` 
+--      `` termPrettyPrint (someTerm :: DeBruijnTerm)``
 -- to get the pretty printed string
 -- If you are in GHCI, you can just print it by typing:
---      `` putStrLn $ termPrettyPrint (someTerm :: LambdaTerm)`` 
+--      `` putStrLn $ termPrettyPrint (someTerm :: LambdaTerm)``
 --      or
---      `` putStrLn $ termPrettyPrint (someTerm :: DeBruijnTerm)`` 
--- which will print the escaped characters as they are meant to be 
+--      `` putStrLn $ termPrettyPrint (someTerm :: DeBruijnTerm)``
+-- which will print the escaped characters as they are meant to be
 -- seen.
 -- Please report bugs!
 --
@@ -163,7 +163,7 @@ instance TermValuePrinter () where
 
 -- This is only called when calling a DeBruijn index
 instance TermValuePrinter Int where
-    termValuePrint n = "#"++ show n 
+    termValuePrint n = "#"++ show n
 
 instance TermValuePrinter a => TermPrettyPrinter [a] where
     termPrettyPrint = intercalate " " . map termValuePrint
@@ -190,7 +190,7 @@ instance (TermValuePrinter a, TermPrettyPrinter b) => TermValuePrinter (a, b) wh
             pb -> ' ' : pb
 
 
--- functions for inserting the brackets in 
+-- functions for inserting the brackets in
 -- the right spots..
 bAssocParen :: String -> String
 bAssocParen str = concat ["(", str, ")"]
@@ -239,19 +239,19 @@ leqAssoc rt@(r :< rp) = ContT $ \k -> case rp of
 
 assocParen (a :< as) =  return $ concat ["(",a,")"] :< as
 
-instance 
+instance
     ( TermPrettyPrinter a
     , TermValuePrinter a
     , TermPrettyPrinter b
     , TermValuePrinter b
     , TermValuePrinter c ) =>
     TermPrettyPrinter (Term a b c) where
-    termPrettyPrint = histo f 
+    termPrettyPrint = histo f
       where
         runAssocParen ct = case runCont ct id of
             str :< _ -> str
 
-        f :: 
+        f ::
             ( TermPrettyPrinter a
             , TermValuePrinter a
             , TermPrettyPrinter b
@@ -260,7 +260,7 @@ instance
             ) =>
             TermF a b c (Cofree (TermF a b c) String) -> String
         f term = case term of
-            AbsF arg (bdy :< _) -> concat    
+            AbsF arg (bdy :< _) -> concat
                 [ "\\"
                 -- , intercalate " " $ map termPrettyPrint $ uncurry (:) arg
                 , termValuePrint arg
@@ -275,7 +275,7 @@ instance
              and function application has the highest precedence.
              -}
 
-            AppF l r -> concat 
+            AppF l r -> concat
                 [ runAssocParen (appAssocL >=> assocParen $ l)
                 , " "
                 , runAssocParen (appAssocR >=> assocParen $ r)
@@ -302,10 +302,10 @@ instance
                 , runAssocParen (appAssocR >=> mulAssocR >=> addAssocR >=> consAssocR >=> leqAssoc >=> assocParen $ r)
                 ]
 
-            VarF v -> termValuePrint v 
+            VarF v -> termValuePrint v
             -- just show constants.. No need to use
             -- to use ``termValuePrint`` since ``termValuePrint``
-            -- would expect a DeBruijn index to print not just an 
+            -- would expect a DeBruijn index to print not just an
             -- Int
             ConstF v -> show v
 
@@ -366,12 +366,12 @@ instance
 -- recursive types in general. You don't need to worry about this :D
 ----------------------------
 cata :: (TermF a b c z -> z) -> Term a b c -> z
-cata f = f . fmap g . project 
+cata f = f . fmap g . project
   where
     g term = cata f term
 
 para :: (TermF a b c (Term a b c, z) -> z) -> Term a b c -> z
-para f = f . fmap g . project 
+para f = f . fmap g . project
   where
     g term = (term, para f term)
 
@@ -379,21 +379,21 @@ data Cofree f a = a :< f (Cofree f a)
 
 instance Functor f => Functor (Cofree f) where
     fmap f (a :< as) = f a :< fmap (fmap f) as
-    
+
 
 histo :: (TermF a b c (Cofree (TermF a b c) z) -> z) -> Term a b c -> z
-histo f = g . h 
+histo f = g . h
   where
     g (v :< _) = v
 
-    h term = uncurry (:<) 
+    h term = uncurry (:<)
         $ (\termf -> (f termf, termf))
         $ fmap h (project term)
 
 project :: Term a b c -> TermF a b c (Term a b c)
 project (Abs a_a1wl0 a_a1wl1) = (AbsF a_a1wl0) a_a1wl1
 project (App a_a1wl2 a_a1wl3) = (AppF a_a1wl2) a_a1wl3
-project (Var a_a1wl4) = VarF a_a1wl4 
+project (Var a_a1wl4) = VarF a_a1wl4
 project (Const a_a1wl5) = ConstF a_a1wl5
 project (Add a_a1wl6 a_a1wl7) = (AddF a_a1wl6) a_a1wl7
 project (Mul a_a1wl8 a_a1wl9) = (MulF a_a1wl8) a_a1wl9
@@ -452,7 +452,7 @@ instance Functor (TermF a b c) where
     fmap f_afeT (MulF a1_afeU a2_afeV) = MulF (f_afeT a1_afeU) (f_afeT a2_afeV)
     fmap f_afeW (BIfF a1_afeX a2_afeY a3_afeZ) = BIfF (f_afeW a1_afeX) (f_afeW a2_afeY) (f_afeW a3_afeZ)
     fmap f_aff0 (BLeqF a1_aff1 a2_aff2) = BLeqF (f_aff0 a1_aff1) (f_aff0 a2_aff2)
-    fmap f_aff3 BTrueF = BTrueF 
+    fmap f_aff3 BTrueF = BTrueF
     fmap f_aff4 BFalseF = BFalseF
     fmap f_aff5 (FFix0F a1_aff6 a2_aff7) = FFix0F ((\ b1_aff8 -> b1_aff8) a1_aff6) (f_aff5 a2_aff7)
     fmap f_aff9 (FFix1F a1_affa a2_affb) = FFix1F ((\ b1_affc -> b1_affc) a1_affa) (f_aff9 a2_affb)
